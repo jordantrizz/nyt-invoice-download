@@ -1,102 +1,184 @@
 # TODO – NYT Invoice Downloader Chrome Extension
 
-## Project Setup
-
-- [ ] **Create `manifest.json`** (Extension & Manifest Agent)
-  - [ ] Define Manifest v3 structure
-  - [ ] Set `matches` for `https://www.nytimes.com/*`
-  - [ ] Add `host_permissions` for nytimes.com and samizdat-graphql.nytimes.com
-  - [ ] Configure content script injection at `document_idle`
-  - [ ] Reference `content.js`
-
-- [ ] **Create `content.js`** (Content Script Layer)
-  - [ ] Load the manifest and define basic lifecycle
-  - [ ] Inject `injected.js` into page context via `<script>` tag
-  - [ ] Handle page load and SPA navigation if needed
-
-- [ ] **Create `injected.js`** (Injection & Hooking Agent + UI Agent)
-  - [ ] **Part A: Fetch Hooking**
-    - [ ] Monkeypatch `window.fetch` safely
-    - [ ] Detect requests to `samizdat-graphql.nytimes.com/graphql/v2`
-    - [ ] Parse JSON body and look for `operationName === "getDigitalInvoiceDetails"`
-    - [ ] Extract `variables.invoiceId` from request
-    - [ ] Clone and parse response to get `data.invoiceDetails.pdfDownloadUrl`
-    - [ ] Store mapping in in-memory `Map<invoiceId, pdfDownloadUrl>`
-    - [ ] Log new captures to console (no auth headers)
-  
-  - [ ] **Part B: UI Overlay Panel**
-    - [ ] Create `createControlPanel()` function
-    - [ ] Render fixed bottom-right panel with dark styling
-    - [ ] Display "Invoices captured: N" status
-    - [ ] Add "Download all PDFs" button
-    - [ ] Style with inline CSS (unobtrusive, no overlaps on small screens)
-  
-  - [ ] **Part C: Download Handler**
-    - [ ] Implement `downloadAllPdfs()` function
-    - [ ] Iterate over `invoicePdfMap` and trigger downloads
-    - [ ] Use `<a href="">` + `.click()` pattern for each PDF
-    - [ ] Use `invoiceId` in filename if possible
-  
-  - [ ] **Part D: Auto-Expand Helper** (Selectors & Auto-Expand Agent)
-    - [ ] Implement `expandAllInvoices()` function
-    - [ ] Use stable selectors (e.g., `data-testid` attributes)
-    - [ ] Check `aria-expanded` or `.collapsed` class
-    - [ ] Click unexpanded buttons to trigger GraphQL calls
-    - [ ] Log how many buttons were clicked
-    - [ ] Add `setTimeout` delay before first invocation
-
-- [ ] **Create `README.md`** (Documentation)
-  - [ ] Installation instructions (load unpacked extension)
-  - [ ] Usage: navigate to NYT billing, click "Download all PDFs"
-  - [ ] Manual test plan (QA & Testing Agent checklist)
-  - [ ] Troubleshooting and security notes
+**Goal**: Build a fully-functioning Chrome Manifest v3 extension by version **1.0.0**  
+**Structure**: Numbered versions (0.1.0, 0.2.0, ..., 1.0.0) for clear task assignment
 
 ---
 
-## Implementation Order (Next 3 Steps)
+## Release Versions
 
-### Step 1: Create `manifest.json`
+### 0.1.0 – Create `manifest.json`
 **Responsibility**: Extension & Manifest Agent  
-**Instructions**:
-- Generate Manifest v3 JSON with the project name, version, and permissions.
-- Ensure `content_scripts` entry points to `content.js` on `https://www.nytimes.com/*`.
-- Add minimal `host_permissions` (no `downloads` permission needed).
+**Description**: Define the Manifest v3 configuration.  
+**Checklist**:
+- [ ] Create `manifest.json` with name, version, and icons placeholder
+- [ ] Set `manifest_version: 3`
+- [ ] Define `content_scripts` with `matches: ["https://www.nytimes.com/*"]` and `run_at: "document_idle"`
+- [ ] Reference `content.js` as the content script
+- [ ] Add `host_permissions` for `https://www.nytimes.com/*` and `https://samizdat-graphql.nytimes.com/*`
+- [ ] Verify no unnecessary permissions (no `downloads`, no broad patterns)
 
-### Step 2: Create `content.js`
-**Responsibility**: Content Script Layer  
-**Instructions**:
-- Create a simple script that injects `injected.js` into the page context.
-- Use a `<script>` tag appended to `document.documentElement` or `document.head`.
-- Optionally add a check to avoid re-injecting if already present.
-
-### Step 3: Create `injected.js` (Core Implementation)
-**Responsibility**: Injection & Hooking Agent + UI & UX Agent  
-**Instructions**:
-- Implement the `window.fetch` monkeypatch with full response parsing logic.
-- Build the `createControlPanel()` and UI rendering.
-- Implement `downloadAllPdfs()` and `expandAllInvoices()` helpers.
-- Wire everything together: call `createControlPanel()` on page load, call `expandAllInvoices()` after a small delay.
+**Status**: [ ] Not Started
 
 ---
 
-## Testing & Validation
+### 0.2.0 – Create `content.js`
+**Responsibility**: Content Script Layer  
+**Description**: Content script that injects `injected.js` into the page context.  
+**Checklist**:
+- [ ] Create `content.js` with a function to safely inject `injected.js`
+- [ ] Use a `<script>` tag appended to `document.documentElement` or `document.head`
+- [ ] Include a guard to prevent re-injection (e.g., check for a global flag)
+- [ ] Add basic logging to console for debugging
 
+**Status**: [ ] Not Started
+
+---
+
+### 0.3.0 – Implement Fetch Hook (Part A of `injected.js`)
+**Responsibility**: Injection & Hooking Agent  
+**Description**: Monkeypatch `window.fetch` to intercept GraphQL calls.  
+**Checklist**:
+- [ ] Create `injected.js` with a safe fetch wrapper
+- [ ] Detect requests to `samizdat-graphql.nytimes.com/graphql/v2`
+- [ ] Parse JSON body to check for `operationName === "getDigitalInvoiceDetails"`
+- [ ] Extract `variables.invoiceId` from the request
+- [ ] Clone response and parse JSON to get `data.invoiceDetails.pdfDownloadUrl`
+- [ ] Store mapping in in-memory `Map<invoiceId, pdfDownloadUrl>`
+- [ ] Log new captures to console (verify no auth headers/cookies are logged)
+- [ ] Return original response unchanged to caller
+
+**Status**: [ ] Not Started
+
+---
+
+### 0.4.0 – Implement UI Overlay Panel (Part B of `injected.js`)
+**Responsibility**: UI & UX Agent  
+**Description**: Render the fixed bottom-right control panel.  
+**Checklist**:
+- [ ] Create `createControlPanel()` function
+- [ ] Build a fixed-position `<div>` in bottom-right corner
+- [ ] Add status span with id `nyt-invoice-status` showing "Invoices captured: N"
+- [ ] Add "Download all PDFs" button with id `nyt-download-button`
+- [ ] Apply inline CSS for dark background, light text, subtle shadow
+- [ ] Ensure panel does not overlap NYT UI on smaller screens
+- [ ] Call `createControlPanel()` on page load (after DOM is ready)
+- [ ] Wire button click handler to `downloadAllPdfs()` (stub for now)
+
+**Status**: [ ] Not Started
+
+---
+
+### 0.5.0 – Implement Download Handler (Part C of `injected.js`)
+**Responsibility**: UI & UX Agent  
+**Description**: Implement the logic to trigger PDF downloads.  
+**Checklist**:
+- [ ] Create `downloadAllPdfs()` function
+- [ ] Iterate over `invoicePdfMap`
+- [ ] For each entry, create a temporary `<a>` element
+- [ ] Set `href` to `pdfDownloadUrl`
+- [ ] Set `download` attribute to filename (use `invoiceId` if available)
+- [ ] Trigger `.click()` to start browser download
+- [ ] Clean up temporary `<a>` elements
+- [ ] Add logging to console (e.g., "Downloading 3 PDFs...")
+- [ ] Update status panel after downloads complete
+
+**Status**: [ ] Not Started
+
+---
+
+### 0.6.0 – Implement Auto-Expand Helper (Part D of `injected.js`)
+**Responsibility**: Selectors & Auto-Expand Agent  
+**Description**: Click unexpanded invoice toggles to fetch all invoices.  
+**Checklist**:
+- [ ] Create `expandAllInvoices()` function
+- [ ] Use stable selectors to find invoice toggle buttons (e.g., `data-testid`)
+- [ ] Check `aria-expanded="false"` or presence of `.collapsed` class
+- [ ] Click each unexpanded button to trigger GraphQL calls
+- [ ] Add `setTimeout` delay (e.g., 500ms) before first invocation
+- [ ] Log how many buttons were clicked
+- [ ] Optionally add delay between clicks to avoid overwhelming the page
+- [ ] Wire a manual "Expand All Invoices" button (optional enhancement)
+
+**Status**: [ ] Not Started
+
+---
+
+### 0.7.0 – Create `README.md`
+**Responsibility**: Documentation / QA Agent  
+**Description**: Write user-facing setup and usage documentation.  
+**Checklist**:
+- [ ] Installation instructions (load unpacked extension in Chrome)
+- [ ] Usage instructions (navigate to NYT billing, interact with panel)
+- [ ] Feature overview (what the extension does)
+- [ ] Screenshots or visual guide (optional)
+- [ ] Manual test checklist for QA
+- [ ] Troubleshooting section (common issues)
+- [ ] Security notes (no data sent off-site, no logging of auth)
+- [ ] Development notes for future maintenance
+
+**Status**: [ ] Not Started
+
+---
+
+### 0.8.0 – Test & Validate Core Flows
+**Responsibility**: QA & Testing Agent  
+**Description**: Manual end-to-end testing of all features.  
+**Checklist**:
 - [ ] Load unpacked extension in Chrome (`chrome://extensions`)
 - [ ] Navigate to NYT billing page while logged in
-- [ ] Verify overlay panel appears in bottom-right
-- [ ] Expand one or more invoices
-- [ ] Confirm invoice counter increments as GraphQL calls are intercepted
-- [ ] Click "Download all PDFs" and verify downloads start
-- [ ] Check browser console for logs and no errors
-- [ ] Verify no cookies or auth headers logged to console
+- [ ] Verify overlay panel appears in bottom-right corner
+- [ ] Manually expand one invoice
+- [ ] Confirm invoice counter increments in panel (1 invoice captured)
+- [ ] Expand additional invoices
+- [ ] Confirm counter updates correctly
+- [ ] Click "Download all PDFs" button
+- [ ] Verify browser downloads PDFs with correct filenames
+- [ ] Check browser console for logs (no errors, no auth data logged)
+- [ ] Test page reload (overlay and data persist if possible)
+- [ ] Test SPA navigation if applicable
+- [ ] Verify panel does not break on mobile-width screens
+
+**Status**: [ ] Not Started
 
 ---
 
-## Security & QA Checklist
+### 0.9.0 – Code Review & Security Audit
+**Responsibility**: Architect & Product Agent  
+**Description**: Final review before release candidate.  
+**Checklist**:
+- [ ] Review `manifest.json` for minimal permissions
+- [ ] Audit `injected.js` for no hard-coded secrets or cookies
+- [ ] Verify fetch hook does not log sensitive headers
+- [ ] Confirm all invoice data stays in-memory (not sent off-site)
+- [ ] Check for any console warnings or errors
+- [ ] Review error handling (graceful failures if GraphQL schema changes)
+- [ ] Validate selector robustness (will they break if NYT updates DOM?)
+- [ ] Review code comments for clarity
 
-- [ ] No hard-coded secrets or cookies in extension code
-- [ ] `window.fetch` wrapper does not log sensitive headers
-- [ ] All invoice data stays in-memory, not sent off-site
-- [ ] Permissions are minimal (no overly broad patterns)
-- [ ] Page reloads or SPA navigation does not break functionality
+**Status**: [ ] Not Started
+
+---
+
+## 1.0.0 – Release (Fully Functioning)
+**Description**: Extension is production-ready and all features are working.  
+**Criteria**:
+- ✓ All versions 0.1.0 through 0.9.0 are complete
+- ✓ Manual testing passed
+- ✓ Security audit passed
+- ✓ README.md is complete and accurate
+- ✓ Extension can be packaged and distributed
+
+**Status**: [ ] Not Started
+
+---
+
+## How to Use This TODO
+
+1. **Pick a version**: Say "Work on 0.3.0" or "Help me with 0.5.0"
+2. **I'll implement it**: I'll create/update the files and check off the checklist items
+3. **Move to next**: Once complete, we move to the next version
+4. **Reach 1.0.0**: When all versions are done, the extension is fully functional
+
+**Current Version**: 0.1.0 ready to start
 
