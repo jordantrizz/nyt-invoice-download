@@ -72,6 +72,8 @@
                   console.log(
                     `[NYT Invoice Downloader] Captured invoice: ${invoiceId}. Total invoices: ${invoicePdfMap.size}`
                   );
+                  // Update the UI status
+                  setTimeout(updateStatusBadge, 100);
                 }
               }
             } catch (error) {
@@ -102,6 +104,149 @@
     invoicePdfMap.clear();
     console.log('[NYT Invoice Downloader] Invoice map cleared.');
   };
+  /**
+   * Update the status display in the control panel
+   */
+  function updateStatusBadge() {
+    const statusElement = document.getElementById('nyt-invoice-status');
+    if (statusElement) {
+      const count = invoicePdfMap.size;
+      statusElement.textContent = `Invoices captured: ${count}`;
+    }
+  }
 
-  console.log('[NYT Invoice Downloader] Fetch hook installed.');
+  /**
+   * Download all captured PDFs
+   */
+  function downloadAllPdfs() {
+    const invoices = Array.from(invoicePdfMap.entries());
+    if (invoices.length === 0) {
+      console.warn('[NYT Invoice Downloader] No invoices to download.');
+      alert('No invoices captured yet.');
+      return;
+    }
+
+    console.log(`[NYT Invoice Downloader] Starting download of ${invoices.length} invoices...`);
+
+    invoices.forEach(([invoiceId, pdfUrl]) => {
+      try {
+        // Create a temporary anchor element
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = `NYT_Invoice_${invoiceId}.pdf`;
+        link.style.display = 'none';
+
+        // Append to body, click, and remove
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        console.log(`[NYT Invoice Downloader] Triggered download for invoice: ${invoiceId}`);
+      } catch (error) {
+        console.error(`[NYT Invoice Downloader] Error downloading invoice ${invoiceId}:`, error);
+      }
+    });
+
+    console.log(`[NYT Invoice Downloader] Initiated download of ${invoices.length} PDFs.`);
+  }
+
+  /**
+   * Create and render the control panel
+   */
+  function createControlPanel() {
+    // Avoid creating multiple panels
+    if (document.getElementById('nyt-invoice-control-panel')) {
+      console.log('[NYT Invoice Downloader] Control panel already exists.');
+      return;
+    }
+
+    // Create the main panel container
+    const panel = document.createElement('div');
+    panel.id = 'nyt-invoice-control-panel';
+    panel.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 999999;
+      background-color: #1a1a1a;
+      color: #ffffff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 13px;
+      min-width: 220px;
+    `;
+
+    // Create the status span
+    const statusSpan = document.createElement('div');
+    statusSpan.id = 'nyt-invoice-status';
+    statusSpan.textContent = 'Invoices captured: 0';
+    statusSpan.style.cssText = `
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 500;
+    `;
+
+    // Create the download button
+    const downloadBtn = document.createElement('button');
+    downloadBtn.id = 'nyt-download-button';
+    downloadBtn.textContent = 'Download all PDFs';
+    downloadBtn.style.cssText = `
+      display: block;
+      width: 100%;
+      padding: 8px 12px;
+      background-color: #0066cc;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background-color 0.2s ease;
+    `;
+
+    // Hover effect
+    downloadBtn.onmouseover = function() {
+      this.style.backgroundColor = '#0052a3';
+    };
+    downloadBtn.onmouseout = function() {
+      this.style.backgroundColor = '#0066cc';
+    };
+
+    // Click handler
+    downloadBtn.onclick = function() {
+      downloadAllPdfs();
+    };
+
+    // Assemble the panel
+    panel.appendChild(statusSpan);
+    panel.appendChild(downloadBtn);
+
+    // Append to body
+    document.body.appendChild(panel);
+
+    console.log('[NYT Invoice Downloader] Control panel created.');
+  }
+
+  /**
+   * Initialize the control panel when the DOM is ready
+   */
+  function initializeUI() {
+    if (document.body) {
+      createControlPanel();
+    } else {
+      // If body isn't ready yet, wait for DOMContentLoaded
+      document.addEventListener('DOMContentLoaded', createControlPanel);
+    }
+  }
+
+  // Initialize UI
+  initializeUI();
+
+  // Expose functions to window for external access
+  window.__nytInvoiceDownloaderUpdateStatus = updateStatusBadge;
+  window.__nytInvoiceDownloaderDownloadAll = downloadAllPdfs;
+
+  console.log('[NYT Invoice Downloader] Fetch hook installed and UI initialized.');
 })();
