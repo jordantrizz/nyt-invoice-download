@@ -151,6 +151,71 @@
   }
 
   /**
+   * Expand all collapsed invoice rows to trigger GraphQL calls
+   */
+  function expandAllInvoices() {
+    try {
+      // Stable selectors to find invoice toggle buttons
+      // We'll try multiple selector patterns to be robust
+      const selectors = [
+        'button[data-testid*="billing-history"][aria-expanded="false"]',
+        'button[aria-expanded="false"]',
+        'button.collapsed',
+      ];
+
+      let clickedCount = 0;
+      const clickedButtons = new Set(); // Track which buttons we've clicked
+
+      // Try each selector pattern
+      for (const selector of selectors) {
+        const buttons = document.querySelectorAll(selector);
+        
+        buttons.forEach((button) => {
+          // Avoid clicking the same button twice
+          if (!clickedButtons.has(button)) {
+            // Additional check: ensure it's related to invoices/billing
+            const ariaLabel = button.getAttribute('aria-label') || '';
+            const dataTestId = button.getAttribute('data-testid') || '';
+            const innerHTML = button.innerHTML || '';
+            
+            // Only click if it looks like an invoice/billing toggle
+            if (
+              ariaLabel.toLowerCase().includes('expand') ||
+              ariaLabel.toLowerCase().includes('collapse') ||
+              dataTestId.toLowerCase().includes('billing') ||
+              dataTestId.toLowerCase().includes('invoice') ||
+              innerHTML.toLowerCase().includes('expand') ||
+              innerHTML.toLowerCase().includes('collapse')
+            ) {
+              button.click();
+              clickedButtons.add(button);
+              clickedCount++;
+              console.log('[NYT Invoice Downloader] Clicked expand button:', button.getAttribute('aria-label') || dataTestId);
+            }
+          }
+        });
+      }
+
+      console.log(`[NYT Invoice Downloader] Clicked ${clickedCount} invoice toggle buttons.`);
+      return clickedCount;
+    } catch (error) {
+      console.error('[NYT Invoice Downloader] Error in expandAllInvoices():', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Auto-expand all invoices with a delay
+   */
+  function autoExpandInvoices() {
+    // Wait 500ms before expanding to allow the page to fully load
+    setTimeout(() => {
+      console.log('[NYT Invoice Downloader] Auto-expanding invoices...');
+      expandAllInvoices();
+    }, 500);
+  }
+
+  /**
    * Create and render the control panel
    */
   function createControlPanel() {
@@ -175,7 +240,7 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       font-size: 13px;
-      min-width: 220px;
+      min-width: 240px;
     `;
 
     // Create the status span
@@ -219,9 +284,42 @@
       downloadAllPdfs();
     };
 
+    // Create the expand button
+    const expandBtn = document.createElement('button');
+    expandBtn.id = 'nyt-expand-button';
+    expandBtn.textContent = 'Expand all invoices';
+    expandBtn.style.cssText = `
+      display: block;
+      width: 100%;
+      padding: 8px 12px;
+      background-color: #28a745;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 8px;
+      transition: background-color 0.2s ease;
+    `;
+
+    // Hover effect
+    expandBtn.onmouseover = function() {
+      this.style.backgroundColor = '#218838';
+    };
+    expandBtn.onmouseout = function() {
+      this.style.backgroundColor = '#28a745';
+    };
+
+    // Click handler
+    expandBtn.onclick = function() {
+      expandAllInvoices();
+    };
+
     // Assemble the panel
     panel.appendChild(statusSpan);
     panel.appendChild(downloadBtn);
+    panel.appendChild(expandBtn);
 
     // Append to body
     document.body.appendChild(panel);
@@ -247,6 +345,7 @@
   // Expose functions to window for external access
   window.__nytInvoiceDownloaderUpdateStatus = updateStatusBadge;
   window.__nytInvoiceDownloaderDownloadAll = downloadAllPdfs;
+  window.__nytInvoiceDownloaderExpandAll = expandAllInvoices;
 
   console.log('[NYT Invoice Downloader] Fetch hook installed and UI initialized.');
 })();
