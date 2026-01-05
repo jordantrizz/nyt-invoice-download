@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "NYT Invoice Downloader",
+  "version": "0.1.0",
+  "description": "Download all your NYT invoices as PDFs with a single click.",
+  "permissions": [],
+  "host_permissions": [
+    "https://www.nytimes.com/*",
+    "https://samizdat-graphql.nytimes.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.nytimes.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "images/icon-16.png",
+    "48": "images/icon-48.png",
+    "128": "images/icon-128.png"
+  }
+}
