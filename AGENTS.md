@@ -227,9 +227,4 @@ You can use this once in Copilot Chat to orient it to the whole project:
 > - Stores them in a Map.
 > - Shows a bottom-right overlay with a counter and a "Download all PDFs" button that iterates the Map and triggers downloads via `<a>` tags.
 > Use the structure and responsibilities defined in AGENTS.md in the workspace. Propose the next 3 concrete edits or new files I should make, in order, with brief instructions for each. Then help me implement the first one.
-
----
-
-If you want, next step I can:  
-
-- Generate an initial `manifest.json`, `content.js`, and `injected.js` skeleton matching this AGENTS.md so you can drop everything into VS Code and let Copilot iterate from there.
+>
