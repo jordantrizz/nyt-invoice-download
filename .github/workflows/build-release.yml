@@ -1,0 +1,65 @@
+name: Build & Release Extension
+
+on:
+  push:
+    tags:
+      - "[0-9]*"
+      - "v[0-9]*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Package and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          VERSION="${VERSION#v}"
+          echo "VERSION=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Assemble extension package
+        run: |
+          mkdir -p dist/nyt-invoice-downloader
+          cp manifest.json content.js injected.js README.md dist/nyt-invoice-downloader/
+          cp -r images dist/nyt-invoice-downloader/
+
+      - name: Stamp version into manifest
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const path = "dist/nyt-invoice-downloader/manifest.json";
+            const manifest = JSON.parse(fs.readFileSync(path, "utf8"));
+            manifest.version = process.env.VERSION;
+            fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + "\n");
+          '
+
+      - name: Validate packaged manifest
+        run: |
+          test -f dist/nyt-invoice-downloader/manifest.json
+          test -f dist/nyt-invoice-downloader/content.js
+          test -f dist/nyt-invoice-downloader/injected.js
+          node -e 'JSON.parse(require("fs").readFileSync("dist/nyt-invoice-downloader/manifest.json", "utf8"))'
+          echo "Packaged manifest.json is valid"
+
+      - name: Create ZIP
+        run: |
+          cd dist
+          pwsh -NoProfile -Command "Compress-Archive -Path 'nyt-invoice-downloader' -DestinationPath 'nyt-invoice-downloader-${{ steps.version.outputs.VERSION }}.zip'"
+          ls -lh
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: NYT Invoice Downloader ${{ steps.version.outputs.VERSION }}
+          files: dist/nyt-invoice-downloader-${{ steps.version.outputs.VERSION }}.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true

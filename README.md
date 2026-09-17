@@ -19,14 +19,21 @@ A lightweight Chrome extension (Manifest v3) that helps you download all your Ne
 
 ## Installation
 
-### Step 1: Clone or Download the Repository
+Prebuilt versions are published as ZIP files on the [Releases page](https://github.com/jordantrizz/nyt-invoice-download/releases). Because the extension is distributed outside the Chrome Web Store, it must be loaded as an unpacked extension — Chrome does not allow one-click install for self-hosted extensions.
+
+### Step 1: Get the Extension Files
+
+**Option A — Download a release (recommended):**
+
+1. Open the [Releases page](https://github.com/jordantrizz/nyt-invoice-download/releases) and download the latest `nyt-invoice-downloader-<version>.zip` file.
+2. Extract the ZIP. You'll get a `nyt-invoice-downloader` folder containing `manifest.json`.
+
+**Option B — Clone the repository:**
 
 ```bash
-git clone https://github.com/yourusername/nyt-invoice-download.git
+git clone https://github.com/jordantrizz/nyt-invoice-download.git
 cd nyt-invoice-download
 ```
-
-Or download the ZIP file from GitHub and extract it.
 
 ### Step 2: Load the Unpacked Extension in Chrome
 
@@ -34,7 +41,7 @@ Or download the ZIP file from GitHub and extract it.
 2. Go to **`chrome://extensions/`** (or click the menu icon → "More tools" → "Extensions").
 3. Enable **"Developer mode"** (toggle in the top-right corner).
 4. Click **"Load unpacked"**.
-5. Navigate to the folder where you cloned/extracted this repository and select it.
+5. Navigate to the extracted/cloned folder that contains `manifest.json` and select it.
 6. The extension should now appear in your extensions list.
 
 ### Step 3: Verify Installation
@@ -158,6 +165,22 @@ The extension consists of three main components:
 - **Invoice Visibility**: The extension only captures invoices that the NYT page has fetched. If your billing page shows invoices progressively (e.g., pagination or lazy loading), you may need to scroll or click "Expand All Invoices" to ensure all invoices are fetched.
 - **Browser Support**: Designed for Chrome and Chromium-based browsers. Firefox and Safari support for extensions is different and would require additional work.
 - **Session Dependency**: The extension relies on an active NYT session. If you are logged out, the extension cannot access invoices.
+
+## Releasing a New Version
+
+Releases are automated with GitHub Actions (`.github/workflows/build-release.yml`). Publishing a version tag triggers the workflow, which:
+
+1. reads the version from the tag (an optional `v` prefix is stripped),
+2. stamps that version into the packaged `manifest.json`,
+3. packages the extension into `nyt-invoice-downloader-<version>.zip`, and
+4. creates a GitHub Release with the ZIP attached and auto-generated release notes.
+
+To cut a release, bump the version and push a tag matching the version:
+
+```bash
+git tag 0.8.0
+git push origin 0.8.0
+```
 
 ## Contributing
 

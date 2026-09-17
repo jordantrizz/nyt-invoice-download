@@ -461,6 +461,32 @@
   }
 
   /**
+   * Build the export filename from invoice data headers.
+   * Format: {MM-DD-YY} NYT Invoice - {accountNumber}.html
+   * If Payment Due date is unavailable, omits the date prefix.
+   */
+  function buildExportFilename(invoiceData) {
+    const headers = invoiceData.headers || [];
+    const accountEntry = headers.find(h => h.headerName === 'Account Number');
+    const dueEntry = headers.find(h => h.headerName === 'Payment Due');
+    const accountNumber = accountEntry ? accountEntry.headerValue : 'Unknown';
+
+    let datePrefix = '';
+    if (dueEntry && dueEntry.headerValue) {
+      const raw = dueEntry.headerValue.trim();
+      const parsed = new Date(raw);
+      if (!isNaN(parsed.getTime())) {
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        const year = String(parsed.getFullYear()).slice(-2);
+        datePrefix = `${month}-${day}-${year} `;
+      }
+    }
+
+    return { datePrefix, accountNumber };
+  }
+
+  /**
    * Download all captured invoices as HTML files
    */
   function downloadAllPdfs() {
@@ -473,6 +499,8 @@
 
     console.log(`[NYT Invoice Downloader] Starting download of ${invoices.length} invoices...`);
 
+    const filenamesSeen = new Set();
+
     invoices.forEach(([invoiceId, invoiceData]) => {
       try {
         const html = generateInvoiceHTML(invoiceId, invoiceData);
@@ -480,7 +508,17 @@
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `NYT_Invoice_${invoiceId}.html`;
+
+        const { datePrefix, accountNumber } = buildExportFilename(invoiceData);
+        let filename = `${datePrefix}NYT Invoice - ${accountNumber}.html`;
+
+        let counter = 2;
+        while (filenamesSeen.has(filename)) {
+          filename = `${datePrefix}NYT Invoice - ${accountNumber}-${counter}.html`;
+          counter++;
+        }
+        filenamesSeen.add(filename);
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
